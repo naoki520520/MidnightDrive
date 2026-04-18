@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MidnightDrive | Hyperdrive Radar HUD</title>
+    <title>MidnightDrive | Neon Speed HUD</title>
     <style>
         :root {
-            --glow-safe: #007aff; /* 藍色 */
-            --glow-safe-alt: #00ff88; /* 綠色 */
-            --glow-warn: #ffcc00; /* 黃色 */
-            --glow-danger: #ff0000; /* 紅色 */
+            --neon-blue: #00f2ff;
+            --neon-red: #ff0033;
             --bg-dark: #000000;
         }
 
@@ -21,151 +19,134 @@
             display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
 
-        .hyperdrive-wrapper {
-            position: relative; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center; z-index: 1;
-        }
-
-        /* 🌌 黑洞背景：炫彩填滿並具備動態感 */
+        /* 🌌 背景特效層 */
         .blackhole-background {
             position: absolute; width: 180%; height: 180%; border-radius: 50%;
-            background: conic-gradient(from 0deg, 
-                var(--bg-dark) 10%, 
-                var(--glow-safe) 30%, 
-                var(--bg-dark) 50%, 
-                var(--glow-safe-alt) 70%, 
-                var(--bg-dark) 90%);
-            animation: rotateFull 3s linear infinite;
-            filter: blur(80px); opacity: 0.6; z-index: -2;
-            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        /* ⚠️ 測速警戒狀態：切換黃紅炫彩 */
-        .blackhole-background.warning {
-            background: conic-gradient(from 0deg, 
-                var(--bg-dark) 10%, 
-                var(--glow-warn) 30%, 
-                var(--bg-dark) 50%, 
-                var(--glow-danger) 70%, 
-                var(--bg-dark) 90%);
-            animation: rotateFull 1s linear infinite;
-            opacity: 0.8;
+            background: conic-gradient(from 0deg, var(--bg-dark) 10%, var(--neon-blue) 30%, var(--bg-dark) 50%, #007aff 70%, var(--bg-dark) 90%);
+            animation: rotateFull 4s linear infinite;
+            filter: blur(80px); opacity: 0.4; z-index: -2;
+            transition: all 0.5s ease;
         }
 
         @keyframes rotateFull { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-        /* 🔢 中央巨大數字 */
+        /* 🔢 螢光數字核心 */
         .speed-display {
-            position: relative; width: 100%; height: 100%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
+            position: relative; text-align: center; z-index: 10;
         }
 
         .speed-num {
-            font-size: calc(100vw * 0.48); font-weight: 900; margin: 0; padding: 0;
-            letter-spacing: -12px; font-variant-numeric: tabular-nums;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-            transition: color 0.5s ease;
+            font-size: calc(100vw * 0.5); 
+            font-weight: 900; 
+            margin: 0; 
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
+            /* 🔵 預設：極光藍發光 */
+            color: #fff;
+            text-shadow: 
+                0 0 10px #fff,
+                0 0 20px var(--neon-blue),
+                0 0 40px var(--neon-blue),
+                0 0 80px var(--neon-blue);
+            transition: all 0.3s ease;
         }
 
-        .warning .speed-num {
-            text-shadow: 0 0 30px var(--glow-danger);
+        /* 🔴 超速：警告紅發光 */
+        .overspeed .speed-num {
+            color: #fff;
+            text-shadow: 
+                0 0 10px #fff,
+                0 0 20px var(--neon-red),
+                0 0 40px var(--neon-red),
+                0 0 80px var(--neon-red),
+                0 0 120px var(--neon-red);
+            animation: pulse 0.5s infinite alternate;
         }
 
-        .radar-hint {
-            position: absolute; top: 15%; font-size: 28px; font-weight: 800;
-            color: var(--glow-warn); text-shadow: 0 0 15px var(--glow-danger);
-            display: none; animation: blink 0.5s infinite alternate;
+        @keyframes pulse {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0.8; transform: scale(1.02); }
         }
 
-        @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
+        .unit {
+            font-size: 28px;
+            color: #888;
+            letter-spacing: 10px;
+            margin-top: -20px;
+            text-transform: uppercase;
+        }
 
-        .unit-info { font-size: 24px; color: #666; margin-top: -40px; text-transform: uppercase; letter-spacing: 5px; }
+        .limit-info {
+            position: absolute;
+            top: -50px; left: 50%; transform: translateX(-50%);
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid var(--neon-red);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--neon-red);
+            display: none;
+        }
 
-        .controls { position: absolute; bottom: 10%; text-align: center; z-index: 100; width: 80%; }
+        .overspeed .limit-info { display: block; }
+
+        .controls { position: absolute; bottom: 8%; text-align: center; width: 100%; }
         button { 
-            padding: 18px 50px; background: rgba(0,0,0,0.6); color: #fff; 
-            border: 2px solid var(--glow-safe); border-radius: 50px; 
-            font-weight: bold; font-size: 18px; cursor: pointer;
-            transition: 0.3s; box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+            padding: 15px 40px; background: none; color: var(--neon-blue);
+            border: 2px solid var(--neon-blue); border-radius: 50px;
+            font-weight: bold; font-size: 16px; cursor: pointer;
+            box-shadow: 0 0 15px rgba(0, 242, 255, 0.3);
         }
-        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
-    <div class="hyperdrive-wrapper" id="main-ui">
-        <div id="radar-hint" class="radar-hint">⚠️ RADAR: <span id="dist-val">---</span>m</div>
+    <div id="main-ui">
         <div class="blackhole-background" id="bg"></div>
         
         <div class="speed-display">
+            <div class="limit-info">SLOWER! SPEED LIMIT 110</div>
             <h1 class="speed-num" id="speed">0</h1>
-            <div class="unit-info">km/h</div>
+            <div class="unit">km/h</div>
         </div>
     </div>
 
     <div class="controls">
-        <button id="start-btn" onclick="initDrive()">ENGAGE DRIVE</button>
-        <p id="status" style="color: #444; font-size: 12px; margin-top: 15px; letter-spacing: 2px;">SYSTEMS READY</p>
+        <button onclick="startTracking()">ENGAGE NEON HUD</button>
     </div>
 
 <script>
-    // 國 1、國 3、國 6 關鍵測速點彙整
-    const cameraPoints = [
-        { name: "國6 西 27.5K", lat: 23.9612, lng: 120.9085 },
-        { name: "國6 東 28.2K", lat: 23.9635, lng: 120.9150 },
-        { name: "國6 東 1.7K", lat: 24.0152, lng: 120.6985 },
-        { name: "國6 西 17.3K", lat: 23.9910, lng: 120.8250 },
-        { name: "國3 南 226.2K", lat: 23.9450, lng: 120.6780 },
-        { name: "國3 北 233.5K", lat: 23.8780, lng: 120.6920 },
-        { name: "國3 北 213.6K", lat: 24.0450, lng: 120.7010 },
-        { name: "國3 北 197.2K", lat: 24.1120, lng: 120.5850 },
-        { name: "國1 南 180.2K", lat: 24.1785, lng: 120.6305 },
-        { name: "國1 北 187.6K", lat: 24.1150, lng: 120.5920 },
-        { name: "國1 南 198.5K", lat: 24.0320, lng: 120.5180 }
-    ];
+    // 國道速限設定
+    const SPEED_LIMIT = 110; 
 
-    function getDistance(lat1, lon1, lat2, lon2) {
-        const R = 6371e3;
-        const dLat = (lat2-lat1) * Math.PI/180;
-        const dLon = (lon2-lon1) * Math.PI/180;
-        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
-        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    }
-
-    function initDrive() {
-        document.getElementById('start-btn').style.display = 'none';
+    function startTracking() {
+        document.querySelector('.controls').style.display = 'none';
+        
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition((pos) => {
                 const kmh = Math.round((pos.coords.speed || 0) * 3.6);
-                document.getElementById('speed').innerText = kmh;
-
-                let minDist = Infinity;
-                cameraPoints.forEach(p => {
-                    const d = getDistance(pos.coords.latitude, pos.coords.longitude, p.lat, p.lng);
-                    if (d < minDist) minDist = d;
-                });
-
-                const bg = document.getElementById('bg');
+                const speedElement = document.getElementById('speed');
                 const ui = document.getElementById('main-ui');
-                const hint = document.getElementById('radar-hint');
-                const distVal = document.getElementById('dist-val');
+                const bg = document.getElementById('bg');
 
-                if (minDist < 600) { // 600公尺內觸發警告
-                    bg.classList.add('warning');
-                    ui.classList.add('warning');
-                    hint.style.display = 'block';
-                    distVal.innerText = Math.round(minDist);
-                    if (window.navigator.vibrate) window.navigator.vibrate([300, 200, 300]);
+                speedElement.innerText = kmh;
+
+                // 🔴 超速判斷邏輯
+                if (kmh > SPEED_LIMIT) {
+                    ui.classList.add('overspeed');
+                    // 背景也轉紅
+                    bg.style.background = `conic-gradient(from 0deg, #000 10%, var(--neon-red) 30%, #000 50%, #ff6600 70%, #000 90%)`;
                 } else {
-                    bg.classList.remove('warning');
-                    ui.classList.remove('warning');
-                    hint.style.display = 'none';
+                    ui.classList.remove('overspeed');
+                    // 回復藍色背景
+                    bg.style.background = `conic-gradient(from 0deg, #000 10%, var(--neon-blue) 30%, #000 50%, #007aff 70%, #000 90%)`;
                 }
-                
-                // 開越快背景轉越快
-                bg.style.animationDuration = Math.max(0.4, 3 - (kmh/80)) + 's';
-                document.getElementById('status').innerText = "HYPERDRIVE ACTIVE";
-            }, (err) => { alert("請授權精準定位以啟動時速偵測"); }, { enableHighAccuracy: true });
+
+                // 加速時旋轉變快
+                bg.style.animationDuration = Math.max(0.5, 4 - (kmh/60)) + 's';
+
+            }, (err) => { alert("請允許位置存取以獲得即時時速"); }, 
+            { enableHighAccuracy: true });
         }
     }
 </script>
