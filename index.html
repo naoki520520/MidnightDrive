@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>車載儀表板 | GPS Speed</title>
+    <style>
+        body {
+            background-color: #000;
+            color: white;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 儀表板容器 */
+        .dashboard {
+            display: flex;
+            width: 90%;
+            max-width: 900px;
+            align-items: center;
+        }
+
+        /* 左側時速錶 */
+        .speedometer {
+            flex: 1;
+            position: relative;
+            text-align: center;
+        }
+
+        .speed-circle {
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            border: 8px solid rgba(0, 122, 255, 0.2);
+            border-top: 8px solid #007aff; /* 模擬進度條 */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            margin: 0 auto;
+            box-shadow: 0 0 30px rgba(0, 122, 255, 0.2);
+        }
+
+        .gear {
+            font-size: 20px;
+            color: #888;
+            letter-spacing: 10px;
+            margin-bottom: -10px;
+        }
+
+        .gear span.active {
+            color: #fff;
+            font-weight: bold;
+        }
+
+        .speed-num {
+            font-size: 120px;
+            font-weight: 800;
+            margin: 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .unit {
+            font-size: 24px;
+            color: #888;
+            margin-top: -10px;
+        }
+
+        /* 右側資訊區 */
+        .info-panel {
+            flex: 1;
+            padding-left: 50px;
+        }
+
+        .status-item {
+            font-size: 18px;
+            color: #aaa;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard">
+    <div class="speedometer">
+        <div class="speed-circle">
+            <div class="gear">P R N <span class="active">D</span></div>
+            <h1 class="speed-num" id="speed">0</h1>
+            <div class="unit">km/h</div>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <div class="status-item">📍 經緯度：<span id="coords">偵測中...</span></div>
+        <div class="status-item">🔋 模擬電量：72%</div>
+        <div class="status-item">🌡️ 外界溫度：26°C</div>
+        <button onclick="startSpeedometer()" style="padding: 10px; background: #333; color: #fff; border: none; border-radius: 5px;">啟動追蹤</button>
+    </div>
+</div>
+
+<script>
+    const speedElement = document.getElementById('speed');
+    const coordsElement = document.getElementById('coords');
+
+    function startSpeedometer() {
+        if ("geolocation" in navigator) {
+            navigator.geolocation.watchPosition((position) => {
+                // position.coords.speed 單位是 m/s，需乘以 3.6 轉為 km/h
+                let speed = position.coords.speed || 0;
+                let kmh = Math.round(speed * 3.6);
+                
+                speedElement.innerText = kmh;
+                coordsElement.innerText = `${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`;
+            }, 
+            (error) => {
+                alert("請允許存取位置權限以顯示時速");
+            }, 
+            {
+                enableHighAccuracy: true, // 開啟高精準度 (必選，否則時速不準)
+                maximumAge: 0
+            });
+        } else {
+            alert("您的瀏覽器不支援 GPS 偵測");
+        }
+    }
+</script>
+</body>
+</html>
