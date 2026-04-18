@@ -2,165 +2,202 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>MidnightDrive | Black Hole HUD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>MidnightDrive | Hyperdrive HUD</title>
     <style>
         :root {
-            --glow-color: #007aff;
-            --bg-color: #050505;
+            --glow-primary: #007aff; /* Tesla 藍 */
+            --glow-secondary: #00f2ff; /* 賽博藍 */
+            --bg-dark: #000000;
         }
 
-        body {
-            background-color: var(--bg-color);
+        body, html {
+            background-color: var(--bg-dark);
             color: white;
             font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        /* 黑洞外圈容器 */
-        .blackhole-container {
-            position: relative;
-            width: 350px;
-            height: 350px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        /* 旋轉的黑洞光暈 */
-        .blackhole-ring {
-            position: absolute;
+            padding: 0;
             width: 100%;
             height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, transparent, var(--glow-color), transparent 60%);
-            animation: rotate 2s linear infinite;
-            filter: blur(8px);
-            opacity: 0.8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden; /* 防止捲動 */
         }
 
-        /* 第二層反向旋轉，增加層次感 */
-        .blackhole-ring-inner {
+        /* 全螢幕黑洞特效容器 */
+        .hyperdrive-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1;
+        }
+
+        /* 🌌 背景拓展層 (填滿全螢幕) */
+        .blackhole-background {
             position: absolute;
-            width: 90%;
-            height: 90%;
-            border-radius: 50%;
-            background: conic-gradient(from 180deg, transparent, #00f2ff, transparent 50%);
-            animation: rotate 1.5s linear infinite reverse;
-            filter: blur(4px);
-            opacity: 0.5;
+            width: 150%; /* 擴大以覆蓋所有邊緣 */
+            height: 150%;
+            border-radius: 50%; /* 保持中心圓，但大到填滿 */
+            /* 圓錐漸層：創造深邃的吸入感，並拓展到外圈 */
+            background: conic-gradient(from 0deg, 
+                var(--bg-dark) 10%, 
+                var(--glow-primary) 30%, 
+                var(--bg-dark) 50%, 
+                var(--glow-secondary) 70%, 
+                var(--bg-dark) 90%);
+            animation: rotateFull 3s linear infinite;
+            filter: blur(60px); /* 🌟 大幅度模糊，讓光暈漫延到整個螢幕 */
+            opacity: 0.6; /* 調整透明度，保持深邃 */
+            z-index: -2;
         }
 
-        /* 中心黑洞區域 */
+        /* 旋轉動畫 */
+        @keyframes rotateFull {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* 🔢 中央時速顯示 (數字極大化) */
         .speed-display {
             position: relative;
-            width: 260px;
-            height: 260px;
-            background: radial-gradient(circle, #000 60%, #111 100%);
-            border-radius: 50%;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            box-shadow: inset 0 0 50px rgba(0, 122, 255, 0.5);
             z-index: 10;
         }
 
+        /* 巨大時速數字 */
+        .speed-num {
+            font-size: calc(100vw * 0.45); /* 🌟 根據螢幕寬度自動縮放，極大化 */
+            font-weight: 900;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+            letter-spacing: -10px; /* 緊縮數字間距 */
+            /* 霓虹發光特效 */
+            color: #fff;
+            text-shadow: 
+                0 0 10px #fff,
+                0 0 20px var(--glow-primary),
+                0 0 30px var(--glow-primary),
+                0 0 40px var(--glow-primary);
+            font-variant-numeric: tabular-nums; /* 保持數字寬度一致，防止跳動 */
+        }
+
+        .unit-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: -30px; /* 緊貼數字 */
+        }
+
         .gear {
-            font-size: 18px;
+            font-size: 20px;
             color: #444;
-            letter-spacing: 8px;
-            margin-bottom: -10px;
+            letter-spacing: 5px;
         }
 
         .gear span.active {
-            color: var(--glow-color);
-            text-shadow: 0 0 10px var(--glow-color);
+            color: #fff;
             font-weight: bold;
         }
 
-        .speed-num {
-            font-size: 100px;
-            font-weight: 800;
-            margin: 0;
-            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
-        }
-
         .unit {
-            font-size: 20px;
-            color: #666;
-            margin-top: -5px;
+            font-size: 24px;
+            color: #888;
             text-transform: uppercase;
         }
 
-        /* 啟動按鈕 (位於下方) */
+        /* 按鈕與狀態 (位於底部，填滿一點) */
         .controls {
             position: absolute;
-            bottom: 40px;
+            bottom: calc(40px + env(safe-area-inset-bottom)); /* 考慮 iPhone 安全區域 */
+            left: 50%;
+            transform: translateX(-50%);
             text-align: center;
+            z-index: 100;
+            width: 80%;
         }
 
         button {
-            padding: 12px 30px;
-            background: transparent;
-            color: var(--glow-color);
-            border: 1px solid var(--glow-color);
-            border-radius: 30px;
+            padding: 15px 40px;
+            background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+            color: var(--glow-primary);
+            border: 2px solid var(--glow-primary);
+            border-radius: 40px;
             cursor: pointer;
             transition: 0.3s;
-            font-size: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(0, 122, 255, 0.3);
         }
 
         button:hover {
-            background: var(--glow-color);
+            background: var(--glow-primary);
             color: white;
-            box-shadow: 0 0 20px var(--glow-color);
+            box-shadow: 0 0 30px var(--glow-primary);
         }
 
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        #status {
+            font-size: 14px;
+            color: #666;
+            margin-top: 15px;
         }
     </style>
 </head>
 <body>
 
-    <div class="blackhole-container">
-        <div class="blackhole-ring"></div>
-        <div class="blackhole-ring-inner"></div>
+    <div class="hyperdrive-wrapper">
+        <div class="blackhole-background"></div>
         
         <div class="speed-display">
-            <div class="gear">P R N <span class="active">D</span></div>
-            <h1 id="speed">0</h1>
-            <div class="unit">km/h</div>
+            <h1 class="speed-num" id="speed">0</h1>
+            <div class="unit-container">
+                <div class="gear">P R N <span class="active">D</span></div>
+                <div class="unit">km/h</div>
+            </div>
         </div>
     </div>
 
     <div class="controls">
-        <button onclick="requestSpeed()">ENTER HYPERDRIVE</button>
-        <p id="status" style="font-size: 12px; color: #444; margin-top: 10px;">Waiting for GPS...</p>
+        <button onclick="requestSpeed()">ENGAGE HYPERDRIVE</button>
+        <p id="status">Waiting for GPS authorization...</p>
     </div>
 
 <script>
     function requestSpeed() {
         if ("geolocation" in navigator) {
+            document.getElementById('status').innerText = "Signal: Locking...";
+            
             navigator.geolocation.watchPosition((position) => {
                 let speed = position.coords.speed || 0;
                 let kmh = Math.round(speed * 3.6);
-                document.getElementById('speed').innerText = kmh;
-                document.getElementById('status').innerText = "Signal: Optimal";
                 
-                // 動態調整旋轉速度：開越快轉越快
-                let rotateSpeed = Math.max(0.5, 2 - (kmh / 100)); 
-                document.querySelector('.blackhole-ring').style.animationDuration = rotateSpeed + 's';
+                // 更新數字
+                document.getElementById('speed').innerText = kmh;
+                document.getElementById('status').innerText = "Signal: Optimal (Hyperdrive Active)";
+                
+                // 動態調整背景旋轉速度與模糊：開越快轉越快，且光暈更散開
+                let rotateSpeed = Math.max(0.3, 3 - (kmh / 100)); 
+                let blurAmount = Math.min(100, 60 + (kmh / 2)); 
+
+                let bgElement = document.querySelector('.blackhole-background');
+                bgElement.style.animationDuration = rotateSpeed + 's';
+                bgElement.style.filter = `blur(${blurAmount}px)`;
+                bgElement.style.opacity = Math.min(1, 0.6 + (kmh / 200)); 
+
             }, 
-            (err) => { document.getElementById('status').innerText = "Error: " + err.message; }, 
-            { enableHighAccuracy: true });
+            (err) => { document.getElementById('status').innerText = "Error: " + err.message + " (Check location settings)"; }, 
+            { enableHighAccuracy: true, maximumAge: 0 });
+        } else {
+            document.getElementById('status').innerText = "Error: Geolocation not supported";
         }
     }
 </script>
