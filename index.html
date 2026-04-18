@@ -3,12 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>車載儀表板 | GPS Speed</title>
+    <title>MidnightDrive | Black Hole HUD</title>
     <style>
+        :root {
+            --glow-color: #007aff;
+            --bg-color: #050505;
+        }
+
         body {
-            background-color: #000;
+            background-color: var(--bg-color);
             color: white;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: 'Inter', -apple-system, sans-serif;
             margin: 0;
             display: flex;
             justify-content: center;
@@ -17,115 +22,145 @@
             overflow: hidden;
         }
 
-        /* 儀表板容器 */
-        .dashboard {
+        /* 黑洞外圈容器 */
+        .blackhole-container {
+            position: relative;
+            width: 350px;
+            height: 350px;
             display: flex;
-            width: 90%;
-            max-width: 900px;
+            justify-content: center;
             align-items: center;
         }
 
-        /* 左側時速錶 */
-        .speedometer {
-            flex: 1;
-            position: relative;
-            text-align: center;
+        /* 旋轉的黑洞光暈 */
+        .blackhole-ring {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: conic-gradient(from 0deg, transparent, var(--glow-color), transparent 60%);
+            animation: rotate 2s linear infinite;
+            filter: blur(8px);
+            opacity: 0.8;
         }
 
-        .speed-circle {
-            width: 300px;
-            height: 300px;
+        /* 第二層反向旋轉，增加層次感 */
+        .blackhole-ring-inner {
+            position: absolute;
+            width: 90%;
+            height: 90%;
             border-radius: 50%;
-            border: 8px solid rgba(0, 122, 255, 0.2);
-            border-top: 8px solid #007aff; /* 模擬進度條 */
+            background: conic-gradient(from 180deg, transparent, #00f2ff, transparent 50%);
+            animation: rotate 1.5s linear infinite reverse;
+            filter: blur(4px);
+            opacity: 0.5;
+        }
+
+        /* 中心黑洞區域 */
+        .speed-display {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            background: radial-gradient(circle, #000 60%, #111 100%);
+            border-radius: 50%;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            margin: 0 auto;
-            box-shadow: 0 0 30px rgba(0, 122, 255, 0.2);
+            box-shadow: inset 0 0 50px rgba(0, 122, 255, 0.5);
+            z-index: 10;
         }
 
         .gear {
-            font-size: 20px;
-            color: #888;
-            letter-spacing: 10px;
+            font-size: 18px;
+            color: #444;
+            letter-spacing: 8px;
             margin-bottom: -10px;
         }
 
         .gear span.active {
-            color: #fff;
+            color: var(--glow-color);
+            text-shadow: 0 0 10px var(--glow-color);
             font-weight: bold;
         }
 
         .speed-num {
-            font-size: 120px;
+            font-size: 100px;
             font-weight: 800;
             margin: 0;
-            font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
         }
 
         .unit {
-            font-size: 24px;
-            color: #888;
-            margin-top: -10px;
+            font-size: 20px;
+            color: #666;
+            margin-top: -5px;
+            text-transform: uppercase;
         }
 
-        /* 右側資訊區 */
-        .info-panel {
-            flex: 1;
-            padding-left: 50px;
+        /* 啟動按鈕 (位於下方) */
+        .controls {
+            position: absolute;
+            bottom: 40px;
+            text-align: center;
         }
 
-        .status-item {
-            font-size: 18px;
-            color: #aaa;
-            margin-bottom: 20px;
+        button {
+            padding: 12px 30px;
+            background: transparent;
+            color: var(--glow-color);
+            border: 1px solid var(--glow-color);
+            border-radius: 30px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: var(--glow-color);
+            color: white;
+            box-shadow: 0 0 20px var(--glow-color);
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
         }
     </style>
 </head>
 <body>
 
-<div class="dashboard">
-    <div class="speedometer">
-        <div class="speed-circle">
+    <div class="blackhole-container">
+        <div class="blackhole-ring"></div>
+        <div class="blackhole-ring-inner"></div>
+        
+        <div class="speed-display">
             <div class="gear">P R N <span class="active">D</span></div>
-            <h1 class="speed-num" id="speed">0</h1>
+            <h1 id="speed">0</h1>
             <div class="unit">km/h</div>
         </div>
     </div>
 
-    <div class="info-panel">
-        <div class="status-item">📍 經緯度：<span id="coords">偵測中...</span></div>
-        <div class="status-item">🔋 模擬電量：72%</div>
-        <div class="status-item">🌡️ 外界溫度：26°C</div>
-        <button onclick="startSpeedometer()" style="padding: 10px; background: #333; color: #fff; border: none; border-radius: 5px;">啟動追蹤</button>
+    <div class="controls">
+        <button onclick="requestSpeed()">ENTER HYPERDRIVE</button>
+        <p id="status" style="font-size: 12px; color: #444; margin-top: 10px;">Waiting for GPS...</p>
     </div>
-</div>
 
 <script>
-    const speedElement = document.getElementById('speed');
-    const coordsElement = document.getElementById('coords');
-
-    function startSpeedometer() {
+    function requestSpeed() {
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition((position) => {
-                // position.coords.speed 單位是 m/s，需乘以 3.6 轉為 km/h
                 let speed = position.coords.speed || 0;
                 let kmh = Math.round(speed * 3.6);
+                document.getElementById('speed').innerText = kmh;
+                document.getElementById('status').innerText = "Signal: Optimal";
                 
-                speedElement.innerText = kmh;
-                coordsElement.innerText = `${position.coords.latitude.toFixed(2)}, ${position.coords.longitude.toFixed(2)}`;
+                // 動態調整旋轉速度：開越快轉越快
+                let rotateSpeed = Math.max(0.5, 2 - (kmh / 100)); 
+                document.querySelector('.blackhole-ring').style.animationDuration = rotateSpeed + 's';
             }, 
-            (error) => {
-                alert("請允許存取位置權限以顯示時速");
-            }, 
-            {
-                enableHighAccuracy: true, // 開啟高精準度 (必選，否則時速不準)
-                maximumAge: 0
-            });
-        } else {
-            alert("您的瀏覽器不支援 GPS 偵測");
+            (err) => { document.getElementById('status').innerText = "Error: " + err.message; }, 
+            { enableHighAccuracy: true });
         }
     }
 </script>
