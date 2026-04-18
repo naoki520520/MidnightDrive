@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MidnightDrive | Vortex Radar HUD</title>
+    <title>MidnightDrive | Vortex Fixed</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
@@ -11,86 +11,105 @@
             --bg-dark: #000000;
         }
 
+        /* 修正 1：確保主容器完全鎖定，不產生捲軸 */
         body, html {
             background-color: var(--bg-dark);
             color: white;
             font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0; padding: 0; width: 100%; height: 100%;
-            display: flex; justify-content: center; align-items: center; overflow: hidden;
+            margin: 0; padding: 0; 
+            width: 100vw; height: 100vh;
+            display: flex; justify-content: center; align-items: center; 
+            overflow: hidden;
+            position: fixed; /* 防止手機瀏覽器滑動造成圖層偏移 */
         }
 
-        /* 🌌 渦流黑洞背景：參考圖片的流動感 */
+        /* 修正 2：漩渦背景修正，使用 fixed 定位並加大覆蓋面積 */
         .vortex-container {
-            position: absolute;
-            width: 250vmax; height: 250vmax;
-            display: flex; justify-content: center; align-items: center;
-            z-index: -1;
+            position: fixed;
+            top: 50%; left: 50%;
+            width: 300vmax; height: 300vmax; /* 加大尺寸防止旋轉露邊 */
+            transform-origin: center center;
+            transform: translate(-50%, -50%); /* 強制置中 */
+            z-index: -2;
             background: repeating-conic-gradient(
                 from 0deg,
                 var(--bg-dark) 0deg,
                 var(--bg-dark) 2deg,
-                rgba(0, 242, 255, 0.15) 3deg,
+                rgba(0, 242, 255, 0.18) 3deg,
                 var(--bg-dark) 4deg
             );
-            animation: vortexRotate 10s linear infinite;
+            animation: vortexRotate 12s linear infinite;
             filter: blur(2px);
-            transition: background 0.5s ease;
+            pointer-events: none; /* 防止干擾點擊 */
+            transition: background 0.6s ease;
         }
 
         .vortex-overlay {
-            position: absolute; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 20%, var(--bg-dark) 80%);
+            position: fixed;
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            background: radial-gradient(circle at center, transparent 15%, var(--bg-dark) 85%);
             z-index: -1;
+            pointer-events: none;
         }
 
-        /* ⚠️ 警告狀態（超速或靠近相機）：切換紅光渦流 */
+        /* ⚠️ 警告模式修正 */
         .warning-mode .vortex-container {
             background: repeating-conic-gradient(
                 from 0deg,
                 var(--bg-dark) 0deg,
-                var(--bg-dark) 2deg,
-                rgba(255, 0, 51, 0.4) 3deg,
-                var(--bg-dark) 4deg
+                var(--bg-dark) 2.5deg,
+                rgba(255, 0, 51, 0.5) 3.5deg,
+                var(--bg-dark) 4.5deg
             );
-            animation: vortexRotate 1.5s linear infinite; /* 警告時極速旋轉 */
+            animation: vortexRotate 1.5s linear infinite;
         }
 
         @keyframes vortexRotate {
-            from { transform: rotate(0deg) scale(1); }
-            to { transform: rotate(360deg) scale(1.1); }
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
 
         /* 🔢 螢光數字顯示 */
-        .speed-display { position: relative; text-align: center; z-index: 10; }
+        .speed-display { 
+            position: relative; 
+            text-align: center; 
+            z-index: 10;
+            width: 100%;
+        }
 
         .speed-num {
-            font-size: calc(100vw * 0.45); font-weight: 900; margin: 0; line-height: 1;
-            font-variant-numeric: tabular-nums; color: #fff;
-            text-shadow: 0 0 15px #fff, 0 0 30px var(--neon-blue), 0 0 60px var(--neon-blue), 0 0 100px var(--neon-blue);
+            font-size: calc(100vw * 0.45); 
+            font-weight: 900; 
+            margin: 0; 
+            line-height: 1;
+            font-variant-numeric: tabular-nums; 
+            color: #fff;
+            text-shadow: 0 0 15px #fff, 0 0 35px var(--neon-blue), 0 0 70px var(--neon-blue), 0 0 110px var(--neon-blue);
             transition: all 0.4s ease;
         }
 
         .warning-mode .speed-num {
-            text-shadow: 0 0 15px #fff, 0 0 30px var(--neon-red), 0 0 60px var(--neon-red), 0 0 120px var(--neon-red);
+            text-shadow: 0 0 15px #fff, 0 0 35px var(--neon-red), 0 0 75px var(--neon-red), 0 0 130px var(--neon-red);
             animation: pulsate 0.4s infinite alternate;
         }
 
-        @keyframes pulsate { from { transform: scale(1); } to { transform: scale(1.05); } }
+        @keyframes pulsate { from { transform: scale(1); } to { transform: scale(1.03); } }
 
-        /* 📡 測速資訊文字 */
         .radar-hint {
-            position: absolute; top: 12%; font-size: 24px; font-weight: bold;
+            position: absolute; top: 12%; font-size: 22px; font-weight: 800;
             color: #ffcc00; text-shadow: 0 0 15px var(--neon-red);
-            display: none; letter-spacing: 2px;
+            display: none; letter-spacing: 2px; text-align: center; width: 100%;
         }
         .warning-mode .radar-hint.active { display: block; }
 
-        .unit { font-size: 24px; color: rgba(255,255,255,0.3); letter-spacing: 12px; margin-top: -15px; text-transform: uppercase; }
+        .unit { font-size: 24px; color: rgba(255,255,255,0.3); letter-spacing: 12px; margin-top: -15px; text-transform: uppercase; font-weight: bold;}
 
-        .controls { position: absolute; bottom: 8%; text-align: center; width: 100%; z-index: 20; }
+        .controls { position: absolute; bottom: 8%; text-align: center; width: 100%; z-index: 100; }
         button { 
-            padding: 18px 50px; background: rgba(0,0,0,0.8); color: var(--neon-blue);
-            border: 2px solid var(--neon-blue); border-radius: 60px; font-weight: bold; font-size: 18px; 
+            padding: 18px 45px; background: rgba(0,0,0,0.85); color: var(--neon-blue);
+            border: 2px solid var(--neon-blue); border-radius: 50px; font-weight: bold; font-size: 18px; 
+            box-shadow: 0 0 15px rgba(0,242,255,0.3);
         }
     </style>
 </head>
@@ -99,7 +118,7 @@
     <div class="vortex-container" id="vortex"></div>
     <div class="vortex-overlay"></div>
     
-    <div id="radar-hint" class="radar-hint">⚠️ RADAR AHEAD: <span id="dist-val">---</span>m</div>
+    <div id="radar-hint" class="radar-hint">⚠️ RADAR: <span id="dist-val">---</span>M</div>
 
     <div class="speed-display">
         <h1 class="speed-num" id="speed">0</h1>
@@ -107,12 +126,11 @@
     </div>
 
     <div class="controls">
-        <button id="start-btn" onclick="startSystem()">INITIALIZE HUD</button>
+        <button id="start-btn" onclick="startSystem()">ENGAGE HUD</button>
     </div>
 
 <script>
     const SPEED_LIMIT = 110;
-    // 國道主要測速座標 (南投/台中/國6熱點)
     const cameraPoints = [
         { name: "國6 西 27.5K", lat: 23.9612, lng: 120.9085 },
         { name: "國6 東 28.2K", lat: 23.9635, lng: 120.9150 },
@@ -140,7 +158,6 @@
                 
                 document.getElementById('speed').innerText = kmh;
 
-                // 測速點距離檢測
                 let minDist = Infinity;
                 cameraPoints.forEach(p => {
                     const d = getDistance(lat, lng, p.lat, p.lng);
@@ -152,7 +169,6 @@
                 const distVal = document.getElementById('dist-val');
                 const vortex = document.getElementById('vortex');
 
-                // 觸發警告條件：超速 OR 靠近測速照相 600m 內
                 const isNearCamera = minDist < 600;
                 const isOverSpeed = kmh > SPEED_LIMIT;
 
@@ -167,11 +183,10 @@
                     hint.classList.remove('active');
                 }
 
-                // 開越快背景流動越狂暴
-                let flowSpeed = Math.max(0.8, 10 - (kmh / 15));
+                let flowSpeed = Math.max(0.6, 12 - (kmh / 12));
                 vortex.style.animationDuration = flowSpeed + 's';
 
-            }, (err) => { alert("GPS Signal Lost"); }, { enableHighAccuracy: true });
+            }, (err) => { console.error(err); }, { enableHighAccuracy: true });
         }
     }
 </script>
