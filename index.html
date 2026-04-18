@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MidnightDrive | Hyperdrive HUD</title>
+    <title>MidnightDrive | Hyperdrive Radar HUD</title>
     <style>
         :root {
-            --glow-primary: #007aff; /* Tesla 藍 */
-            --glow-secondary: #00f2ff; /* 賽博藍 */
+            --glow-safe: #007aff; /* 藍色 */
+            --glow-safe-alt: #00ff88; /* 綠色 */
+            --glow-warn: #ffcc00; /* 黃色 */
+            --glow-danger: #ff0000; /* 紅色 */
             --bg-dark: #000000;
         }
 
@@ -15,189 +17,155 @@
             background-color: var(--bg-dark);
             color: white;
             font-family: 'Inter', -apple-system, sans-serif;
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden; /* 防止捲動 */
+            margin: 0; padding: 0; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
 
-        /* 全螢幕黑洞特效容器 */
         .hyperdrive-wrapper {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1;
+            position: relative; width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center; z-index: 1;
         }
 
-        /* 🌌 背景拓展層 (填滿全螢幕) */
+        /* 🌌 黑洞背景：炫彩填滿並具備動態感 */
         .blackhole-background {
-            position: absolute;
-            width: 150%; /* 擴大以覆蓋所有邊緣 */
-            height: 150%;
-            border-radius: 50%; /* 保持中心圓，但大到填滿 */
-            /* 圓錐漸層：創造深邃的吸入感，並拓展到外圈 */
+            position: absolute; width: 180%; height: 180%; border-radius: 50%;
             background: conic-gradient(from 0deg, 
                 var(--bg-dark) 10%, 
-                var(--glow-primary) 30%, 
+                var(--glow-safe) 30%, 
                 var(--bg-dark) 50%, 
-                var(--glow-secondary) 70%, 
+                var(--glow-safe-alt) 70%, 
                 var(--bg-dark) 90%);
             animation: rotateFull 3s linear infinite;
-            filter: blur(60px); /* 🌟 大幅度模糊，讓光暈漫延到整個螢幕 */
-            opacity: 0.6; /* 調整透明度，保持深邃 */
-            z-index: -2;
+            filter: blur(80px); opacity: 0.6; z-index: -2;
+            transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
-        /* 旋轉動畫 */
-        @keyframes rotateFull {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        /* ⚠️ 測速警戒狀態：切換黃紅炫彩 */
+        .blackhole-background.warning {
+            background: conic-gradient(from 0deg, 
+                var(--bg-dark) 10%, 
+                var(--glow-warn) 30%, 
+                var(--bg-dark) 50%, 
+                var(--glow-danger) 70%, 
+                var(--bg-dark) 90%);
+            animation: rotateFull 1s linear infinite;
+            opacity: 0.8;
         }
 
-        /* 🔢 中央時速顯示 (數字極大化) */
+        @keyframes rotateFull { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        /* 🔢 中央巨大數字 */
         .speed-display {
-            position: relative;
-            width: 100%;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 10;
+            position: relative; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 10;
         }
 
-        /* 巨大時速數字 */
         .speed-num {
-            font-size: calc(100vw * 0.45); /* 🌟 根據螢幕寬度自動縮放，極大化 */
-            font-weight: 900;
-            margin: 0;
-            padding: 0;
-            text-align: center;
-            letter-spacing: -10px; /* 緊縮數字間距 */
-            /* 霓虹發光特效 */
-            color: #fff;
-            text-shadow: 
-                0 0 10px #fff,
-                0 0 20px var(--glow-primary),
-                0 0 30px var(--glow-primary),
-                0 0 40px var(--glow-primary);
-            font-variant-numeric: tabular-nums; /* 保持數字寬度一致，防止跳動 */
+            font-size: calc(100vw * 0.48); font-weight: 900; margin: 0; padding: 0;
+            letter-spacing: -12px; font-variant-numeric: tabular-nums;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+            transition: color 0.5s ease;
         }
 
-        .unit-container {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-top: -30px; /* 緊貼數字 */
+        .warning .speed-num {
+            text-shadow: 0 0 30px var(--glow-danger);
         }
 
-        .gear {
-            font-size: 20px;
-            color: #444;
-            letter-spacing: 5px;
+        .radar-hint {
+            position: absolute; top: 15%; font-size: 28px; font-weight: 800;
+            color: var(--glow-warn); text-shadow: 0 0 15px var(--glow-danger);
+            display: none; animation: blink 0.5s infinite alternate;
         }
 
-        .gear span.active {
-            color: #fff;
-            font-weight: bold;
-        }
+        @keyframes blink { from { opacity: 1; } to { opacity: 0.4; } }
 
-        .unit {
-            font-size: 24px;
-            color: #888;
-            text-transform: uppercase;
-        }
+        .unit-info { font-size: 24px; color: #666; margin-top: -40px; text-transform: uppercase; letter-spacing: 5px; }
 
-        /* 按鈕與狀態 (位於底部，填滿一點) */
-        .controls {
-            position: absolute;
-            bottom: calc(40px + env(safe-area-inset-bottom)); /* 考慮 iPhone 安全區域 */
-            left: 50%;
-            transform: translateX(-50%);
-            text-align: center;
-            z-index: 100;
-            width: 80%;
+        .controls { position: absolute; bottom: 10%; text-align: center; z-index: 100; width: 80%; }
+        button { 
+            padding: 18px 50px; background: rgba(0,0,0,0.6); color: #fff; 
+            border: 2px solid var(--glow-safe); border-radius: 50px; 
+            font-weight: bold; font-size: 18px; cursor: pointer;
+            transition: 0.3s; box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
         }
-
-        button {
-            padding: 15px 40px;
-            background: rgba(0, 0, 0, 0.5); /* 半透明背景 */
-            color: var(--glow-primary);
-            border: 2px solid var(--glow-primary);
-            border-radius: 40px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-size: 16px;
-            font-weight: bold;
-            box-shadow: 0 0 15px rgba(0, 122, 255, 0.3);
-        }
-
-        button:hover {
-            background: var(--glow-primary);
-            color: white;
-            box-shadow: 0 0 30px var(--glow-primary);
-        }
-
-        #status {
-            font-size: 14px;
-            color: #666;
-            margin-top: 15px;
-        }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
-    <div class="hyperdrive-wrapper">
-        <div class="blackhole-background"></div>
+    <div class="hyperdrive-wrapper" id="main-ui">
+        <div id="radar-hint" class="radar-hint">⚠️ RADAR: <span id="dist-val">---</span>m</div>
+        <div class="blackhole-background" id="bg"></div>
         
         <div class="speed-display">
             <h1 class="speed-num" id="speed">0</h1>
-            <div class="unit-container">
-                <div class="gear">P R N <span class="active">D</span></div>
-                <div class="unit">km/h</div>
-            </div>
+            <div class="unit-info">km/h</div>
         </div>
     </div>
 
     <div class="controls">
-        <button onclick="requestSpeed()">ENGAGE HYPERDRIVE</button>
-        <p id="status">Waiting for GPS authorization...</p>
+        <button id="start-btn" onclick="initDrive()">ENGAGE DRIVE</button>
+        <p id="status" style="color: #444; font-size: 12px; margin-top: 15px; letter-spacing: 2px;">SYSTEMS READY</p>
     </div>
 
 <script>
-    function requestSpeed() {
+    // 國 1、國 3、國 6 關鍵測速點彙整
+    const cameraPoints = [
+        { name: "國6 西 27.5K", lat: 23.9612, lng: 120.9085 },
+        { name: "國6 東 28.2K", lat: 23.9635, lng: 120.9150 },
+        { name: "國6 東 1.7K", lat: 24.0152, lng: 120.6985 },
+        { name: "國6 西 17.3K", lat: 23.9910, lng: 120.8250 },
+        { name: "國3 南 226.2K", lat: 23.9450, lng: 120.6780 },
+        { name: "國3 北 233.5K", lat: 23.8780, lng: 120.6920 },
+        { name: "國3 北 213.6K", lat: 24.0450, lng: 120.7010 },
+        { name: "國3 北 197.2K", lat: 24.1120, lng: 120.5850 },
+        { name: "國1 南 180.2K", lat: 24.1785, lng: 120.6305 },
+        { name: "國1 北 187.6K", lat: 24.1150, lng: 120.5920 },
+        { name: "國1 南 198.5K", lat: 24.0320, lng: 120.5180 }
+    ];
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2-lat1) * Math.PI/180;
+        const dLon = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function initDrive() {
+        document.getElementById('start-btn').style.display = 'none';
         if ("geolocation" in navigator) {
-            document.getElementById('status').innerText = "Signal: Locking...";
-            
-            navigator.geolocation.watchPosition((position) => {
-                let speed = position.coords.speed || 0;
-                let kmh = Math.round(speed * 3.6);
-                
-                // 更新數字
+            navigator.geolocation.watchPosition((pos) => {
+                const kmh = Math.round((pos.coords.speed || 0) * 3.6);
                 document.getElementById('speed').innerText = kmh;
-                document.getElementById('status').innerText = "Signal: Optimal (Hyperdrive Active)";
+
+                let minDist = Infinity;
+                cameraPoints.forEach(p => {
+                    const d = getDistance(pos.coords.latitude, pos.coords.longitude, p.lat, p.lng);
+                    if (d < minDist) minDist = d;
+                });
+
+                const bg = document.getElementById('bg');
+                const ui = document.getElementById('main-ui');
+                const hint = document.getElementById('radar-hint');
+                const distVal = document.getElementById('dist-val');
+
+                if (minDist < 600) { // 600公尺內觸發警告
+                    bg.classList.add('warning');
+                    ui.classList.add('warning');
+                    hint.style.display = 'block';
+                    distVal.innerText = Math.round(minDist);
+                    if (window.navigator.vibrate) window.navigator.vibrate([300, 200, 300]);
+                } else {
+                    bg.classList.remove('warning');
+                    ui.classList.remove('warning');
+                    hint.style.display = 'none';
+                }
                 
-                // 動態調整背景旋轉速度與模糊：開越快轉越快，且光暈更散開
-                let rotateSpeed = Math.max(0.3, 3 - (kmh / 100)); 
-                let blurAmount = Math.min(100, 60 + (kmh / 2)); 
-
-                let bgElement = document.querySelector('.blackhole-background');
-                bgElement.style.animationDuration = rotateSpeed + 's';
-                bgElement.style.filter = `blur(${blurAmount}px)`;
-                bgElement.style.opacity = Math.min(1, 0.6 + (kmh / 200)); 
-
-            }, 
-            (err) => { document.getElementById('status').innerText = "Error: " + err.message + " (Check location settings)"; }, 
-            { enableHighAccuracy: true, maximumAge: 0 });
-        } else {
-            document.getElementById('status').innerText = "Error: Geolocation not supported";
+                // 開越快背景轉越快
+                bg.style.animationDuration = Math.max(0.4, 3 - (kmh/80)) + 's';
+                document.getElementById('status').innerText = "HYPERDRIVE ACTIVE";
+            }, (err) => { alert("請授權精準定位以啟動時速偵測"); }, { enableHighAccuracy: true });
         }
     }
 </script>
