@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>MidnightDrive | BlackHole Neon HUD</title>
+    <title>MidnightDrive | Vortex Radar HUD</title>
     <style>
         :root {
             --neon-blue: #00f2ff;
@@ -19,135 +19,158 @@
             display: flex; justify-content: center; align-items: center; overflow: hidden;
         }
 
-        /* 🌌 終極黑洞特效層：雙層旋轉以增加深度 */
-        .hyperdrive-wrapper {
-            position: absolute; width: 200%; height: 200%;
+        /* 🌌 渦流黑洞背景：參考圖片的流動感 */
+        .vortex-container {
+            position: absolute;
+            width: 250vmax; height: 250vmax;
             display: flex; justify-content: center; align-items: center;
+            z-index: -1;
+            background: repeating-conic-gradient(
+                from 0deg,
+                var(--bg-dark) 0deg,
+                var(--bg-dark) 2deg,
+                rgba(0, 242, 255, 0.15) 3deg,
+                var(--bg-dark) 4deg
+            );
+            animation: vortexRotate 10s linear infinite;
+            filter: blur(2px);
+            transition: background 0.5s ease;
+        }
+
+        .vortex-overlay {
+            position: absolute; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 20%, var(--bg-dark) 80%);
             z-index: -1;
         }
 
-        .blackhole-ring {
-            position: absolute; width: 100%; height: 100%;
-            border-radius: 50%;
-            background: conic-gradient(from 0deg, 
-                var(--bg-dark) 10%, 
-                var(--neon-blue) 30%, 
-                var(--bg-dark) 50%, 
-                #007aff 70%, 
-                var(--bg-dark) 90%);
-            animation: rotateFull 3s linear infinite;
-            filter: blur(100px); /* 強化模糊，填滿黑色部分 */
-            opacity: 0.5;
-            transition: background 0.8s ease;
+        /* ⚠️ 警告狀態（超速或靠近相機）：切換紅光渦流 */
+        .warning-mode .vortex-container {
+            background: repeating-conic-gradient(
+                from 0deg,
+                var(--bg-dark) 0deg,
+                var(--bg-dark) 2deg,
+                rgba(255, 0, 51, 0.4) 3deg,
+                var(--bg-dark) 4deg
+            );
+            animation: vortexRotate 1.5s linear infinite; /* 警告時極速旋轉 */
         }
 
-        /* ⚠️ 超速時背景切換為紅黃黑洞 */
-        .overspeed .blackhole-ring {
-            background: conic-gradient(from 0deg, 
-                var(--bg-dark) 10%, 
-                var(--neon-red) 30%, 
-                var(--bg-dark) 50%, 
-                #ffcc00 70%, 
-                var(--bg-dark) 90%);
-            animation: rotateFull 1s linear infinite; /* 超速時狂暴旋轉 */
-            opacity: 0.7;
+        @keyframes vortexRotate {
+            from { transform: rotate(0deg) scale(1); }
+            to { transform: rotate(360deg) scale(1.1); }
         }
 
-        @keyframes rotateFull { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        /* 🔢 螢光數字顯示區 */
-        .speed-container {
-            position: relative; text-align: center; z-index: 10;
-        }
+        /* 🔢 螢光數字顯示 */
+        .speed-display { position: relative; text-align: center; z-index: 10; }
 
         .speed-num {
-            font-size: calc(100vw * 0.48); 
-            font-weight: 900; 
-            margin: 0; line-height: 0.9;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -10px;
-            color: #fff;
-            /* 🔵 預設：強烈藍色螢光暈 */
-            text-shadow: 
-                0 0 10px #fff,
-                0 0 30px var(--neon-blue),
-                0 0 60px var(--neon-blue),
-                0 0 100px var(--neon-blue);
-            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-size: calc(100vw * 0.45); font-weight: 900; margin: 0; line-height: 1;
+            font-variant-numeric: tabular-nums; color: #fff;
+            text-shadow: 0 0 15px #fff, 0 0 30px var(--neon-blue), 0 0 60px var(--neon-blue), 0 0 100px var(--neon-blue);
+            transition: all 0.4s ease;
         }
 
-        /* 🔴 超速狀態：數字轉紅螢光 */
-        .overspeed .speed-num {
-            text-shadow: 
-                0 0 10px #fff,
-                0 0 30px var(--neon-red),
-                0 0 60px var(--neon-red),
-                0 0 100px var(--neon-red),
-                0 0 150px var(--neon-red);
-            animation: shake 0.2s infinite alternate;
+        .warning-mode .speed-num {
+            text-shadow: 0 0 15px #fff, 0 0 30px var(--neon-red), 0 0 60px var(--neon-red), 0 0 120px var(--neon-red);
+            animation: pulsate 0.4s infinite alternate;
         }
 
-        @keyframes shake {
-            from { transform: translate(1px, 1px) scale(1); }
-            to { transform: translate(-1px, -1px) scale(1.01); }
-        }
+        @keyframes pulsate { from { transform: scale(1); } to { transform: scale(1.05); } }
 
-        .unit {
-            font-size: 24px; color: #888;
-            letter-spacing: 12px; margin-top: -10px;
-            text-transform: uppercase; font-weight: bold;
+        /* 📡 測速資訊文字 */
+        .radar-hint {
+            position: absolute; top: 12%; font-size: 24px; font-weight: bold;
+            color: #ffcc00; text-shadow: 0 0 15px var(--neon-red);
+            display: none; letter-spacing: 2px;
         }
+        .warning-mode .radar-hint.active { display: block; }
 
-        /* 底部控制鈕 */
-        .controls { position: absolute; bottom: 8%; text-align: center; width: 100%; z-index: 100; }
+        .unit { font-size: 24px; color: rgba(255,255,255,0.3); letter-spacing: 12px; margin-top: -15px; text-transform: uppercase; }
+
+        .controls { position: absolute; bottom: 8%; text-align: center; width: 100%; z-index: 20; }
         button { 
-            padding: 18px 50px; background: rgba(0,0,0,0.7); color: #fff;
-            border: 2px solid var(--neon-blue); border-radius: 60px;
-            font-weight: bold; font-size: 18px; cursor: pointer;
-            box-shadow: 0 0 20px rgba(0, 242, 255, 0.4);
+            padding: 18px 50px; background: rgba(0,0,0,0.8); color: var(--neon-blue);
+            border: 2px solid var(--neon-blue); border-radius: 60px; font-weight: bold; font-size: 18px; 
         }
     </style>
 </head>
 <body id="main-body">
 
-    <div class="hyperdrive-wrapper">
-        <div class="blackhole-ring" id="bg-ring"></div>
-    </div>
+    <div class="vortex-container" id="vortex"></div>
+    <div class="vortex-overlay"></div>
     
-    <div class="speed-container">
+    <div id="radar-hint" class="radar-hint">⚠️ RADAR AHEAD: <span id="dist-val">---</span>m</div>
+
+    <div class="speed-display">
         <h1 class="speed-num" id="speed">0</h1>
         <div class="unit">km/h</div>
     </div>
 
     <div class="controls">
-        <button id="start-btn" onclick="engageSystem()">ENGAGE HYPERDRIVE</button>
+        <button id="start-btn" onclick="startSystem()">INITIALIZE HUD</button>
     </div>
 
 <script>
-    const SPEED_LIMIT = 110; 
+    const SPEED_LIMIT = 110;
+    // 國道主要測速座標 (南投/台中/國6熱點)
+    const cameraPoints = [
+        { name: "國6 西 27.5K", lat: 23.9612, lng: 120.9085 },
+        { name: "國6 東 28.2K", lat: 23.9635, lng: 120.9150 },
+        { name: "國3 南 226.2K", lat: 23.9450, lng: 120.6780 },
+        { name: "國3 北 233.5K", lat: 23.8780, lng: 120.6920 },
+        { name: "國1 南 180.2K", lat: 24.1785, lng: 120.6305 },
+        { name: "國1 北 187.6K", lat: 24.1150, lng: 120.5920 }
+    ];
 
-    function engageSystem() {
+    function getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371e3;
+        const dLat = (lat2-lat1) * Math.PI/180;
+        const dLon = (lon2-lon1) * Math.PI/180;
+        const a = Math.sin(dLat/2) * Math.sin(dLat/2) + Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) * Math.sin(dLon/2) * Math.sin(dLon/2);
+        return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    }
+
+    function startSystem() {
         document.getElementById('start-btn').style.display = 'none';
-        
         if ("geolocation" in navigator) {
             navigator.geolocation.watchPosition((pos) => {
+                const lat = pos.coords.latitude;
+                const lng = pos.coords.longitude;
                 const kmh = Math.round((pos.coords.speed || 0) * 3.6);
-                const speedEl = document.getElementById('speed');
+                
+                document.getElementById('speed').innerText = kmh;
+
+                // 測速點距離檢測
+                let minDist = Infinity;
+                cameraPoints.forEach(p => {
+                    const d = getDistance(lat, lng, p.lat, p.lng);
+                    if (d < minDist) minDist = d;
+                });
+
                 const body = document.getElementById('main-body');
-                const ring = document.getElementById('bg-ring');
+                const hint = document.getElementById('radar-hint');
+                const distVal = document.getElementById('dist-val');
+                const vortex = document.getElementById('vortex');
 
-                speedEl.innerText = kmh;
+                // 觸發警告條件：超速 OR 靠近測速照相 600m 內
+                const isNearCamera = minDist < 600;
+                const isOverSpeed = kmh > SPEED_LIMIT;
 
-                if (kmh > SPEED_LIMIT) {
-                    body.classList.add('overspeed');
+                if (isNearCamera || isOverSpeed) {
+                    body.classList.add('warning-mode');
+                    if (isNearCamera) {
+                        hint.classList.add('active');
+                        distVal.innerText = Math.round(minDist);
+                    }
                 } else {
-                    body.classList.remove('overspeed');
+                    body.classList.remove('warning-mode');
+                    hint.classList.remove('active');
                 }
 
-                // 動態效果：開越快，黑洞轉越快，且模糊度隨速度變化產生吸入感
-                let animSpeed = Math.max(0.4, 3 - (kmh / 80));
-                ring.style.animationDuration = animSpeed + 's';
-                
+                // 開越快背景流動越狂暴
+                let flowSpeed = Math.max(0.8, 10 - (kmh / 15));
+                vortex.style.animationDuration = flowSpeed + 's';
+
             }, (err) => { alert("GPS Signal Lost"); }, { enableHighAccuracy: true });
         }
     }
